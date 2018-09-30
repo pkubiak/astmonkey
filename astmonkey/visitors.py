@@ -589,10 +589,11 @@ class BaseSourceGeneratorNodeVisitor(ast.NodeVisitor):
             self.visit(node.value)
 
     def visit_Lambda(self, node):
-        self.write('lambda ')
+        self.write('(lambda ')
         self.signature(node.args)
-        self.write(': ')
+        self.write(': (')
         self.visit(node.body)
+        self.write('))')
 
     def visit_Ellipsis(self, node):
         self.write('...')

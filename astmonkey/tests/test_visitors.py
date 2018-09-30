@@ -166,25 +166,31 @@ class TestSourceGeneratorNodeVisitor(object):
         # lambda
         'lambda x: x',
         'lambda x: (((x ** 2) + (2 * x)) - 5)',
-        # '(lambda: (yield))()',
+        '(lambda: (yield))()',
 
         # subscript
         'x[y]',
+
         # slice
         'x[y:z:q]',
         'x[1:2,3:4]',
         'x[:2,:2]',
         'x[1:2]',
         'x[::2]',
+
         # global
         'global x',
+
         # raise
         'raise Exception()',
+
         # format
         '(\'a %s\' % \'b\')',
         '\'a {}\'.format(\'b\')',
+
         # decorator
         '@x(y)' + EOL + EMPTY_FUNC,
+
         # call
         'f(a)',
         'f(a, b)',
