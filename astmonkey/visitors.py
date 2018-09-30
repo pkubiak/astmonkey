@@ -741,10 +741,16 @@ class SourceGeneratorNodeVisitorPython30(SourceGeneratorNodeVisitorPython27):
         self.body(node.body)
 
     def signature_arg(self, arg, default, write_comma):
-        super().signature_arg(arg, default, write_comma)
+        write_comma()
+        self.visit(arg)
+
         if self._is_node_args_valid(arg, 'annotation'):
             self.write(': ')
             self.visit(arg.annotation)
+
+        if default is not None:
+            self.write('=')
+            self.visit(default)
 
     def visit_FunctionDef(self, node):
         self.decorators(node)
