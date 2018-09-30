@@ -78,6 +78,7 @@ class TestSourceGeneratorNodeVisitor(object):
         SIMPLE_ASSIGN + EOL + EOL + SIMPLE_ASSIGN,
         EOL + SIMPLE_ASSIGN,
         EOL + EOL + SIMPLE_ASSIGN,
+
         # class definition
         EMPTY_CLASS,
         EOL + EMPTY_CLASS,
@@ -86,15 +87,20 @@ class TestSourceGeneratorNodeVisitor(object):
         EOL + EMPTY_FUNC,
         CLASS_DEF + EOL + INDENT + FUNC_DEF + EOL + INDENT + INDENT + SIMPLE_ASSIGN,
         'class A(B, C):' + EOL + INDENT + PASS,
+
         # function definition
         FUNC_DEF + EOL + INDENT + PASS,
         'def f(x, y=1, *args, **kwargs):' + EOL + INDENT + PASS,
         'def f(a, b=\'c\', *args, **kwargs):' + EOL + INDENT + PASS,
         FUNC_DEF + EOL + INDENT + 'return',
         FUNC_DEF + EOL + INDENT + 'return 5',
+        'def __init__(self, *args, x=None, **kwargs):' + EOL + PASS,
+        FUNC_DEF + EOL + INDENT + 'return (x ==' + EOL + INDENT + '        ' + 'x)',
+
         # yield
         FUNC_DEF + EOL + INDENT + 'yield',
         FUNC_DEF + EOL + INDENT + 'yield 5',
+
         # importing
         'import x',
         'import x as y',
@@ -106,12 +112,16 @@ class TestSourceGeneratorNodeVisitor(object):
         'from . import x',
         'from .. import x',
         'from .y import x',
+        'import x, y, z',
+        'from x import (y, z, q)',
+
         # operators
         '(x and y)',
         'x < y',
         '(not x)',
         '(x + y)',
         '((x + y) / z)',
+
         # if
         'if x:' + EOL + INDENT + PASS,
         'if x:' + EOL + INDENT + PASS + EOL + 'else:' + EOL + INDENT + PASS,
@@ -123,19 +133,27 @@ class TestSourceGeneratorNodeVisitor(object):
         'if x:' + EOL + INDENT + PASS + EOL + 'elif y:' + EOL + INDENT + PASS
         + EOL + 'elif z:' + EOL + INDENT + PASS + EOL + 'else:' + EOL + INDENT + PASS,
         'x if y else z',
+        'x = y * (z if z > 1 else 1)',
+        'if x:' + EOL + INDENT + PASS + EOL + 'else:' + EOL + INDENT + 'if x:' + EOL + INDENT + INDENT + PASS,
+        'if x' + EOL + INDENT + PASS + EOL + EOL + 'elif x:' + EOL + INDENT + PASS,
+
         # while
         'while (not i != 1):' + EOL + INDENT + SIMPLE_ASSIGN,
         'while True:' + EOL + INDENT + 'if True:' + EOL + INDENT + INDENT + 'continue',
         'while True:' + EOL + INDENT + 'if True:' + EOL + INDENT + INDENT + 'break',
         SIMPLE_ASSIGN + EOL + EOL + 'while False:' + EOL + INDENT + PASS,
+
         # for
         'for x in y:' + EOL + INDENT + 'break',
         'for x in y:' + EOL + INDENT + PASS + EOL + 'else:' + EOL + INDENT + PASS,
+
         # try ... except
         'try:' + EOL + INDENT + PASS + EOL + 'except Y:' + EOL + INDENT + PASS,
         'try:' + EOL + INDENT + PASS + EOL + EOL + EOL + 'except Y:' + EOL + INDENT + PASS,
         'try:' + EOL + INDENT + PASS + EOL + 'except Y as y:' + EOL + INDENT + PASS,
         'try:' + EOL + INDENT + PASS + EOL + 'finally:' + EOL + INDENT + PASS,
+        'try:' + EOL + INDENT + PASS + EOL + 'except:' + EOL + INDENT + PASS + EOL + 'else:' + EOL + INDENT + PASS,
+
         # del
         'del x',
         'del x, y, z',
@@ -148,6 +166,8 @@ class TestSourceGeneratorNodeVisitor(object):
         # lambda
         'lambda x: x',
         'lambda x: (((x ** 2) + (2 * x)) - 5)',
+        '(lambda: (yield))()',
+
         # subscript
         'x[y]',
         # slice
@@ -188,13 +208,22 @@ class TestSourceGeneratorNodeVisitor(object):
         'x[...]',
         # str
         "x = 'y'",
+        'r"\\n"',
+
         # num
         '1',
+
         # docstring
         SINGLE_LINE_DOCSTRING,
         MULTI_LINE_DOCSTRING,
         CLASS_DEF + EOL + INDENT + MULTI_LINE_DOCSTRING,
         FUNC_DEF + EOL + INDENT + MULTI_LINE_DOCSTRING,
+        SIMPLE_ASSIGN + EOL + MULTI_LINE_DOCSTRING,
+        MULTI_LINE_DOCSTRING + EOL + MULTI_LINE_DOCSTRING,
+
+        # line continuation
+        'x = \\' + EOL + INDENT + 'y = 5',
+        'raise TypeError(' + EOL + INDENT + 'f"data argument must be a bytes-like object, "' + EOL + INDENT + 'f"not {type(data).__name__}")'
     ]
 
     if utils.check_version(from_inclusive=(2, 7)):
@@ -233,10 +262,14 @@ class TestSourceGeneratorNodeVisitor(object):
             'x = \'äöüß\'',
             # metaclass
             'class X(Y, metaclass=Z):' + EOL + INDENT + 'pass',
-            # type hinting
+
+            # function annotations
             'def f(a: str) -> str:' + EOL + INDENT + PASS,
+            "def f(x: 'x' = 0):" + EOL + INDENT + PASS,
+
             # extended iterable unpacking
             '(x, *y) = z',
+
         ]
 
     if utils.check_version(from_inclusive=(3, 3)):
@@ -251,20 +284,30 @@ class TestSourceGeneratorNodeVisitor(object):
         testdata += [
             # unpack into dict
             '{**kwargs}',
+
             # async/await
             'async ' + FUNC_DEF + EOL + INDENT + PASS,
             'async ' + FUNC_DEF + EOL + INDENT + 'async for line in reader:' + EOL + INDENT + INDENT + PASS,
             'async ' + FUNC_DEF + EOL + INDENT + 'await asyncio.sleep(1)',
+            'async with x:' + EOL + INDENT + PASS,
+
+            # matrix multiplication operator
+            'x @ y',
+
+            #
         ]
 
     if utils.check_version(from_inclusive=(3, 6)):
         testdata += [
             # f-strings
-            'f\'He said his name is {name}.\''
+            'f\'He said his name is {name}.\'',
+            'f"{x!r}"',
+            'f"a\'b"',
         ]
 
     @pytest.mark.parametrize("source", testdata)
     def test_codegen_roundtrip(self, source):
         node = ast.parse(source)
         generated = visitors.to_source(node)
-        assert source == generated
+        node_generated = ast.parse(generated)
+        assert ast.dump(node) == ast.dump(node_generated)
