@@ -157,12 +157,15 @@ class TestSourceGeneratorNodeVisitor(object):
         # del
         'del x',
         'del x, y, z',
+
         # with
         'with x:' + EOL + INDENT + 'pass',
         'with x as y:' + EOL + INDENT + 'pass',
+
         # assert
         'assert True, \'message\'',
         'assert True',
+
         # lambda
         'lambda x: x',
         'lambda x: (((x ** 2) + (2 * x)) - 5)',
@@ -198,23 +201,31 @@ class TestSourceGeneratorNodeVisitor(object):
         'f(*args)',
         'f(**kwargs)',
         'f(a, b=1, *args, **kwargs)',
+
         # list
         '[1, 2, 3]',
+
         # dict
         '{a: 3, b: \'c\'}',
+
         # list comprehension
         'x = [y.value for y in z if y.value >= 3]',
+
         # generator expression
         '(x for x in y if x)',
+
         # tuple
         '(1, 2)',
+
         # attribute
         'x.y',
+
         # ellipsis
         'x[...]',
+
         # str
         "x = 'y'",
-        # 'r"\\n"',
+        'r"\\n"',
 
         # num
         '1',
@@ -236,8 +247,10 @@ class TestSourceGeneratorNodeVisitor(object):
         testdata += [
             # set
             '{1, 2}',
+
             # set comprehension
             '{x for x in y if x}',
+
             # dict comprehension
             'x = {y: z for (y, z) in a}',
         ]
@@ -248,8 +261,10 @@ class TestSourceGeneratorNodeVisitor(object):
             'print \'a\'',
             'print \'a\',',
             'print >> sys.stderr, \'a\'',
+
             # raise with msg and tb
             'raise x, y, z',
+
             # repr
             '`a`'
         ]
@@ -258,14 +273,19 @@ class TestSourceGeneratorNodeVisitor(object):
         testdata += [
             # nonlocal
             'nonlocal x',
+
             # starred
             '*x = y',
+
             # raise from
             'raise Exception() from exc',
+
             # byte string
             'b\'byte_string\'',
+
             # unicode string
             'x = \'äöüß\'',
+
             # metaclass
             'class X(Y, metaclass=Z):' + EOL + INDENT + 'pass',
 
@@ -283,6 +303,7 @@ class TestSourceGeneratorNodeVisitor(object):
         testdata += [
             # with multiple
             'with x, y:' + EOL + INDENT + 'pass',
+            
             # yield from
             FUNC_DEF + EOL + INDENT + 'yield from x',
         ]

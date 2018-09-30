@@ -196,7 +196,9 @@ class BaseSourceGeneratorNodeVisitor(ast.NodeVisitor):
             self.body(node.orelse)
 
     def docstring(self, node):
-        self.write('"""{0}"""'.format(node.s))
+        s = repr(node.s)
+        c = s[0]
+        self.write('{0}{0}{1}{0}{0}'.format(c, s))
 
     def signature(self, node):
         write_comma = self._write_comma([])
