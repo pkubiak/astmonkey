@@ -781,8 +781,7 @@ class SourceGeneratorNodeVisitorPython33(SourceGeneratorNodeVisitorPython32):
             self.write('finally:')
             self.body(node.finalbody)
 
-    def visit_With(self, node):
-        self.newline(node)
+    def _with_body(self, node):
         self.write('with ')
         for with_item in node.items:
             self.visit(with_item.context_expr)
@@ -794,10 +793,18 @@ class SourceGeneratorNodeVisitorPython33(SourceGeneratorNodeVisitorPython32):
         self.write(':')
         self.body(node.body)
 
+    def visit_With(self, node):
+        self.newline(node)
+        self._with_body(node)
+
     def visit_YieldFrom(self, node):
         self.write('yield from ')
         self.visit(node.value)
 
+    def visit_AsyncWith(self, node):
+        self.newline(node)
+        self.write('async ')
+        self._with_body(node)
 
 class SourceGeneratorNodeVisitorPython34(SourceGeneratorNodeVisitorPython33):
     __python_version__ = (3, 4)

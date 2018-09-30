@@ -294,7 +294,6 @@ class TestSourceGeneratorNodeVisitor(object):
             # matrix multiplication operator
             'x @ y',
 
-            #
         ]
 
     if utils.check_version(from_inclusive=(3, 6)):
