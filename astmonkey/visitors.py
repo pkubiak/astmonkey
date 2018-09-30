@@ -80,7 +80,8 @@ BINOP_SYMBOLS = {
     ast.BitOr: '|',
     ast.BitAnd: '&',
     ast.BitXor: '^',
-    ast.Pow: '**'
+    ast.Pow: '**',
+    ast.MatMult: '@',
 }
 
 CMPOP_SYMBOLS = {
@@ -244,22 +245,26 @@ class BaseSourceGeneratorNodeVisitor(ast.NodeVisitor):
         self.write(' ' + BINOP_SYMBOLS[type(node.op)] + '= ')
         self.visit(node.value)
 
-    def visit_ImportFrom(self, node):
-        self.newline(node)
-
+    @staticmethod
+    def _import_names(names):
         imports = []
-        for alias in node.names:
+        for alias in names:
             name = alias.name
             if alias.asname:
                 name += ' as ' + alias.asname
             imports.append(name)
-        self.write('from {0}{1} import {2}'.format('.' * node.level, node.module or '', ', '.join(imports)))
+
+        return ', '.join(imports)
+
+    def visit_ImportFrom(self, node):
+        self.newline(node)
+
+        self.write('from {0}{1} import {2}'.format('.' * node.level, node.module or '', self._import_names(node.names)))
 
     def visit_Import(self, node):
         self.newline(node)
-        for item in node.names:
-            self.write('import ')
-            self.visit(item)
+        self.write('import {0}'.format(self._import_names(node.names)))
+
 
     def visit_Expr(self, node):
         if isinstance(node.value, ast.Str):
@@ -870,7 +875,7 @@ class SourceGeneratorNodeVisitorPython36(SourceGeneratorNodeVisitorPython35):
             self.write('f\'')
             for item in node.values:
                 if isinstance(item, ast.Str):
-                    self.write(item.s.lstrip('\'').rstrip('\''))
+                    self.write(item.s.lstrip('\'').rstrip('\'').replace("'", "\\'"))
                 else:
                     self.visit(item)
             self.write('\'')
@@ -879,6 +884,14 @@ class SourceGeneratorNodeVisitorPython36(SourceGeneratorNodeVisitorPython35):
         if self._is_node_args_valid(node, 'value'):
             self.write('{')
             self.visit(node.value)
+
+            if node.conversion == -1:
+                pass
+            elif node.conversion == 114:
+                self.write('!r')
+            else:
+                raise ValueError('Unsupported node.converions == %s' % (node.conversion, ))
+
             self.write('}')
 
 
