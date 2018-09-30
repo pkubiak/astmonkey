@@ -787,6 +787,10 @@ class SourceGeneratorNodeVisitorPython33(SourceGeneratorNodeVisitorPython32):
             self.newline(node)
             self.write('finally:')
             self.body(node.finalbody)
+        if node.orelse:
+            self.newline(node)
+            self.write('else:')
+            self.body(node.orelse)
 
     def _with_body(self, node):
         self.write('with ')
