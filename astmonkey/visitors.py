@@ -268,6 +268,7 @@ class BaseSourceGeneratorNodeVisitor(ast.NodeVisitor):
 
     def visit_Expr(self, node):
         if isinstance(node.value, ast.Str):
+            self.newline(node)
             self.docstring(node.value)
         else:
             self.newline(node)
