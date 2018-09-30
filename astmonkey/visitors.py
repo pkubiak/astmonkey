@@ -626,11 +626,13 @@ class BaseSourceGeneratorNodeVisitor(ast.NodeVisitor):
         self.write('}')
 
     def visit_IfExp(self, node):
+        self.write('(')
         self.visit(node.body)
         self.write(' if ')
         self.visit(node.test)
         self.write(' else ')
         self.visit(node.orelse)
+        self.write(')')
 
     def visit_Starred(self, node):
         self.write('*')
