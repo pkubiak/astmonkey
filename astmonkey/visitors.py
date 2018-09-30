@@ -147,6 +147,14 @@ class BaseSourceGeneratorNodeVisitor(ast.NodeVisitor):
     def _is_node_args_valid(cls, node, arg_name):
         return hasattr(node, arg_name) and getattr(node, arg_name) is not None
 
+    def _write_comma(self, item):
+        def write_comma():
+            if item:
+                self.write(', ')
+            else:
+                item.append(True)
+        return write_comma
+
     def write(self, x, node=None):
         self.correct_line_number(node)
         self.result.append(x)
@@ -191,13 +199,7 @@ class BaseSourceGeneratorNodeVisitor(ast.NodeVisitor):
         self.write('"""{0}"""'.format(node.s))
 
     def signature(self, node):
-        want_comma = []
-
-        def write_comma():
-            if want_comma:
-                self.write(', ')
-            else:
-                want_comma.append(True)
+        write_comma = self._write_comma([])
 
         padding = [None] * (len(node.args) - len(node.defaults))
         for arg, default in zip(node.args, padding + node.defaults):
@@ -207,16 +209,15 @@ class BaseSourceGeneratorNodeVisitor(ast.NodeVisitor):
 
     def signature_kwarg(self, node, write_comma):
         if node.kwarg is not None:
-            write_comma()
-            self.write('**' + node.kwarg)
+            self.signature_arg(node.kwarg, None, write_comma, prefix='**')
 
     def signature_vararg(self, node, write_comma):
         if node.vararg is not None:
-            write_comma()
-            self.write('*' + node.vararg)
+            self.signature_arg(node.vararg, None, write_comma, prefix='*')
 
-    def signature_arg(self, arg, default, write_comma):
+    def signature_arg(self, arg, default, write_comma, prefix=''):
         write_comma()
+        self.write(prefix)
         self.visit(arg)
         if default is not None:
             self.write('=')
@@ -448,13 +449,8 @@ class BaseSourceGeneratorNodeVisitor(ast.NodeVisitor):
         self.write(')')
 
     def call_signature(self, node):
-        want_comma = []
+        write_comma = self._write_comma([])
 
-        def write_comma():
-            if want_comma:
-                self.write(', ')
-            else:
-                want_comma.append(True)
         for arg in node.args:
             write_comma()
             self.visit(arg)
@@ -743,8 +739,19 @@ class SourceGeneratorNodeVisitorPython30(SourceGeneratorNodeVisitorPython27):
         self.write(have_args and '):' or ':')
         self.body(node.body)
 
-    def signature_arg(self, arg, default, write_comma):
+    def signature(self, node):
+        write_comma = self._write_comma([])
+
+        padding = [None] * (len(node.args) - len(node.defaults))
+        for arg, default in zip(node.args, padding + node.defaults):
+            self.signature_arg(arg, default, write_comma)
+        self.signature_vararg(node, write_comma)
+        self.signature_kwonlyargs(node, write_comma)
+        self.signature_kwarg(node, write_comma)
+
+    def signature_arg(self, arg, default, write_comma, prefix=''):
         write_comma()
+        self.write(prefix)
         self.visit(arg)
 
         if self._is_node_args_valid(arg, 'annotation'):
@@ -754,6 +761,14 @@ class SourceGeneratorNodeVisitorPython30(SourceGeneratorNodeVisitorPython27):
         if default is not None:
             self.write('=')
             self.visit(default)
+
+    def signature_kwonlyargs(self, node, write_comma):
+        if len(node.kwonlyargs) > 0 and node.vararg is None:
+            write_comma()
+            self.write('*')
+
+        for arg, default in zip(node.kwonlyargs, node.kw_defaults):
+            self.signature_arg(arg, default, write_comma)
 
     def visit_FunctionDef(self, node):
         self.decorators(node)
@@ -833,13 +848,11 @@ class SourceGeneratorNodeVisitorPython34(SourceGeneratorNodeVisitorPython33):
 
     def signature_vararg(self, node, write_comma):
         if node.vararg is not None:
-            write_comma()
-            self.write('*' + node.vararg.arg)
+            self.signature_arg(node.vararg, None, write_comma, prefix='*')
 
     def signature_kwarg(self, node, write_comma):
         if node.kwarg is not None:
-            write_comma()
-            self.write('**' + node.kwarg.arg)
+            self.signature_arg(node.kwarg, None, write_comma, prefix='**')
 
 
 class SourceGeneratorNodeVisitorPython35(SourceGeneratorNodeVisitorPython34):
@@ -857,13 +870,7 @@ class SourceGeneratorNodeVisitorPython35(SourceGeneratorNodeVisitorPython34):
             self.visit(node.value)
 
     def call_signature(self, node):
-        want_comma = []
-
-        def write_comma():
-            if want_comma:
-                self.write(', ')
-            else:
-                want_comma.append(True)
+        write_comma = self._write_comma([])
 
         starargs = []
         kwargs = []

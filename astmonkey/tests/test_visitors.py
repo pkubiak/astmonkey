@@ -94,7 +94,7 @@ class TestSourceGeneratorNodeVisitor(object):
         'def f(a, b=\'c\', *args, **kwargs):' + EOL + INDENT + PASS,
         FUNC_DEF + EOL + INDENT + 'return',
         FUNC_DEF + EOL + INDENT + 'return 5',
-        # TODO: 'def __init__(self, *args, x=None, **kwargs):' + EOL + PASS,
+        'def __init__(self, *args, x=None, **kwargs):' + EOL + INDENT + PASS,
         # TODO: FUNC_DEF + EOL + INDENT + 'return (x ==' + EOL + INDENT + '        ' + 'x)',
 
         # yield
@@ -266,6 +266,7 @@ class TestSourceGeneratorNodeVisitor(object):
             # function annotations
             'def f(a: str) -> str:' + EOL + INDENT + PASS,
             "def f(x: 'x' = 0):" + EOL + INDENT + PASS,
+            "def f(x: 'x' = 0, *args: 'args', y: 'y' = 1, **kwargs: 'kwargs') -> 'return':" + EOL + INDENT + PASS,
 
             # extended iterable unpacking
             '(x, *y) = z',
@@ -309,4 +310,4 @@ class TestSourceGeneratorNodeVisitor(object):
         node = ast.parse(source)
         generated = visitors.to_source(node)
         node_generated = ast.parse(generated)
-        assert ast.dump(node) == ast.dump(node_generated)
+        assert ast.dump(node) == ast.dump(node_generated), generated
